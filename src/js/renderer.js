@@ -1,11 +1,11 @@
-import { Vector3D } from './vector.js';
+import { Vector3D, Vector2D } from './vector.js';
 
 let ctx;
 
 export default class Renderer {
 	canvas;
 	get size() {
-		return new Vector3D(this.canvas.width, this.canvas.height, 20);
+		return new Vector3D(this.canvas.width, this.canvas.height, 200);
 	}
 	constructor({canvas}) {
 		this.canvas = canvas;
@@ -21,21 +21,20 @@ export default class Renderer {
 
 	drawBoid(_boid) {
 		let percDepth = _boid.position.z / this.size.z;
+		let tiltPerc = _boid.velocity.D2.length / _boid.velocity.length;
 		const size = 20 * percDepth;
-		const angle = Math.PI / 2 * 1.35;
+		const length = size * tiltPerc;
+
+		const angle = Math.PI / 2 * 0.5;
 		const widthFactor = .8;
 		let centre = _boid.position.copy();
+		let dir = _boid.velocity.D2.unitary;
+		let leng = dir.copy().scale(length);
 
-		// TODO compress based on angle in plane
-
-		let leng = _boid.velocity.unitary.D2.scale(size);
-		let leftOffset = leng.copy().scale(widthFactor);
-		let rightOffset = leftOffset.copy();
-		leftOffset.angle += angle;
-		rightOffset.angle -= angle;
-
-		let leftWing = centre.copy().add(leftOffset);
-		let rightWing = centre.copy().add(rightOffset);
+		let dYWings = dir.perpendicular.scale(Math.tan(angle) * size);
+		let wingBase = centre.copy().add(leng.copy().scale(-1));
+		let leftWing = wingBase.copy().add(dYWings);
+		let rightWing = wingBase.copy().add(dYWings.copy().scale(-1));
 		let tip = centre.copy().add(leng);
 
 		ctx.strokeStyle = '#777';

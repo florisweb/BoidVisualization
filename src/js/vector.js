@@ -26,6 +26,11 @@ class BaseVector {
 	copy() {
 		return new this.constructor(...this._value);
 	}
+
+
+	projectOnTo(_Vec) {
+		return _Vec.unitary.scale(this.dotProduct(_Vec.unitary));
+	}
 }
 
 
@@ -46,6 +51,9 @@ export class Vector2D extends BaseVector {
 		let oldLength = this.length;
 		this.x = oldLength * Math.cos(_angle % (2 * Math.PI));
 		this.y = oldLength * Math.sin(_angle % (2 * Math.PI));
+	}
+	get perpendicular() {
+		return new Vector2D(-this.y, this.x);
 	}
 
 	dotProduct(_vec) {
