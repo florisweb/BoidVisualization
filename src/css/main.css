@@ -1,0 +1,14 @@
+* {
+	box-sizing: border-box;
+}
+body {
+	margin: 0;
+	padding: 0;
+}
+
+#worldCanvas {
+	position: relative;
+	width: auto;
+	height: 100vh;
+	border: 1px solid red;
+}
