@@ -1,11 +1,11 @@
-import Vector from './vector.js';
+import { Vector3D } from './vector.js';
 
 let ctx;
 
 export default class Renderer {
 	canvas;
 	get size() {
-		return new Vector(this.canvas.width, this.canvas.height);
+		return new Vector3D(this.canvas.width, this.canvas.height, 20);
 	}
 	constructor({canvas}) {
 		this.canvas = canvas;
@@ -20,12 +20,15 @@ export default class Renderer {
 	}
 
 	drawBoid(_boid) {
-		const size = 10;
+		let percDepth = _boid.position.z / this.size.z;
+		const size = 20 * percDepth;
 		const angle = Math.PI / 2 * 1.35;
 		const widthFactor = .8;
 		let centre = _boid.position.copy();
 
-		let leng = _boid.velocity.unitary.copy().scale(size);
+		// TODO compress based on angle in plane
+
+		let leng = _boid.velocity.unitary.D2.scale(size);
 		let leftOffset = leng.copy().scale(widthFactor);
 		let rightOffset = leftOffset.copy();
 		leftOffset.angle += angle;

@@ -1,4 +1,4 @@
-import Vector from './vector.js';
+import { Vector2D, Vector3D } from './vector.js';
 import Boid from './boid.js';
 
 export default class Simulation {
@@ -15,24 +15,22 @@ export default class Simulation {
 			let pos = this.size.copy();
 			pos.x *= Math.random();
 			pos.y *= Math.random();
-			// this.boids.push(new Boid({position: pos}));
+			pos.z *= Math.random();
 			this.boids.push(new Boid({position: this.size.copy().scale(.5)}));
 		}
-		// this.boids[1].velocity = new Vector(10**-5, 0);
-
-		this.update();
 	}
 
 	#lastUpdate = new Date();
-	update() {
+	update(_dt) {
+		// let dt = _dt; //(new Date() - this.#lastUpdate)/1000;
 		let dt = (new Date() - this.#lastUpdate)/1000;
 		this.#updateBoidVelocities(dt);
-		this.#updateBoidPositions(dt);
+		this.#enforceBoundaryConditions(dt);
 		this.#lastUpdate = new Date();
 	}
 	
 	#updateBoidVelocities(_dt) {
-		let deltaVAngles = [];
+		let deltaVAngleVecs = [];
 		let deltaVLengths = [];
 		for (let b = 0; b < this.boids.length; b++)
 		{
@@ -41,8 +39,8 @@ export default class Simulation {
 			let trueNeighbours = neighbours.filter(n => n !== boid);
 			if (trueNeighbours.length === 0) continue;
 
-			let avVelocity = new Vector(0, 0);
-			let avPos = new Vector(0, 0);
+			let avVelocity = new Vector3D(0, 0, 0);
+			let avPos = new Vector3D(0, 0, 0);
 			for (let neighbour of trueNeighbours) 
 			{
 				avVelocity.add(neighbour.velocity);
@@ -50,17 +48,23 @@ export default class Simulation {
 			}
 			avVelocity.scale(1 / trueNeighbours.length);
 			avPos.scale(1 / avPos.length);
-			// avPos = this.size.copy().scale(.5);
 
-			let dVelocityAngle = (boid.velocity.angle - avVelocity.angle);
+			let dVelocityAngle = boid.velocity.angle.difference(avVelocity.angle);
 			let dVelocityLength = boid.velocity.length - avVelocity.length;
 			
-			let dPosAngle = (boid.velocity.angle - boid.position.difference(avPos).angle);
-			deltaVAngles[b] = -dVelocityAngle * .1 - dPosAngle * .5;
+			let dPosAngle = boid.velocity.angle.difference(boid.position.difference(avPos).angle);
+			deltaVAngleVecs[b] = dVelocityAngle.scale(-.1).add(dPosAngle.scale(-.5));
+			deltaVAngleVecs[b].y = 0;
 			deltaVLengths[b] = -dVelocityLength * .5;
 		}
-		for (let b = 0; b < this.boids.length; b++) this.boids[b].velocity.angle += deltaVAngles[b] * _dt || 0;
-		for (let b = 0; b < this.boids.length; b++) this.boids[b].velocity.length += deltaVLengths[b] * _dt || 0;
+
+		for (let b = 0; b < this.boids.length; b++) 
+		{
+			this.boids[b].velocity.angle = this.boids[b].velocity.angle.add(
+				deltaVAngleVecs[b] ? deltaVAngleVecs[b].scale(_dt) : new Vector2D(0, 0)
+			);
+			this.boids[b].velocity.length += deltaVLengths[b] * _dt || 0;
+		}
 	}
 	#getBoidsInRange(_pos, _range) {
 		const rangeSquared = _range**2;
@@ -83,7 +87,7 @@ export default class Simulation {
 		return Array.from(boids);
 	}
 
-	#updateBoidPositions(_dt) {
+	#enforceBoundaryConditions(_dt) {
 		for (let boid of this.boids) 
 		{
 			boid.update(_dt);
@@ -91,6 +95,9 @@ export default class Simulation {
 			boid.position.y = boid.position.y % this.size.y;
 			if (boid.position.x < 0) boid.position.x += this.size.x;
 			if (boid.position.y < 0) boid.position.y += this.size.y;
+
+			if (boid.position.z < 0) boid.velocity.z = Math.abs(boid.velocity.z);
+			if (boid.position.z > this.size.z) boid.velocity.z = -Math.abs(boid.velocity.z);
 		}
 	}
 }

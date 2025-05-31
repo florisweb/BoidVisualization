@@ -80,6 +80,24 @@ export class Vector3D extends Vector2D {
 	static get random() {
 		return new this(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1);
 	}
+	get D2() {
+		return new Vector2D(this.x, this.y);
+	}
+
+	get angle() {
+		return new Vector2D(
+			Math.atan(this.y/this.x), 
+			Math.atan(this.z / Math.sqrt(this.x**2 + this.y**2))
+		);
+	}
+
+	set angle(_angleVec) {
+		let oldLength = this.length;
+		let new2DLength = oldLength * Math.cos(_angleVec.y % (2 * Math.PI));
+		this.x = new2DLength * Math.cos(_angleVec.x % (2 * Math.PI));
+		this.y = new2DLength * Math.sin(_angleVec.x % (2 * Math.PI));
+		this.z = oldLength * Math.sin(_angleVec.y % (2 * Math.PI));
+	}
 	
 	dotProduct(_vec) {
 		return _vec.x * this.x + _vec.y * this.y + _vec.z * this.z;

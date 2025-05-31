@@ -1,4 +1,4 @@
-import Vector from './vector.js';
+import { Vector2D, Vector3D } from './vector.js';
 import Simulation from './simulation.js';
 import Renderer from './renderer.js';
 
@@ -8,16 +8,18 @@ const App = new class {
 	renderer;
 
 	constructor() {
-		window.Vector = Vector;
+		window.Vector3D = Vector3D;
+		window.Vector2D = Vector2D;
+
 		window.App = this;
 		this.renderer = new Renderer({canvas: document.querySelector('#worldCanvas')});
-		this.simulation = new Simulation({size: this.renderer.size, boidCount: 10});
+		this.simulation = new Simulation({size: this.renderer.size, boidCount: 20});
 
 		this.update();
 	}
 
-	update() {
-		this.simulation.update();
+	update(_dt) {
+		this.simulation.update(_dt);
 		this.renderer.drawBoids(this.simulation.boids);
 		requestAnimationFrame(() => this.update());
 	}

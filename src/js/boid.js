@@ -1,12 +1,13 @@
-import Vector from './vector.js';
+import { Vector3D } from './vector.js';
 
 export default class Boid {
 	position;
 	velocity;
 	constructor({position}) {
 		this.position = position;
-		this.velocity = new Vector(Math.random() * 2 - 1, Math.random() * 2 - 1).scale(200);
-		// this.velocity = new Vector(1, 0).scale(0.001);
+		this.velocity = Vector3D.random.scale(200);
+		// this.velocity.z *= 0.1;
+		this.velocity.z = 0;
 	}
 
 	update(_dt) {
