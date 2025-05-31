@@ -1,25 +1,10 @@
 
-export default class Vector {
-	#value = [0, 0];
+class BaseVector {
+	_value = [0, 0, 0];
 	get value() {
-		return this.#value;
+		return this._value;
 	}
-	get x() {return this.#value[0]}
-	get y() {return this.#value[1]}
-	set x(_x) {this.#value[0] = _x}
-	set y(_y) {this.#value[1] = _y}
-
-	get angle() {
-		return Math.atan(this.y/this.x);
-	}
-
-	set angle(_angle) {
-		let oldLength = this.length;
-		this.x = oldLength * Math.cos(_angle % (2 * Math.PI));
-		this.y = oldLength * Math.sin(_angle % (2 * Math.PI));
-	}
-
-
+	
 	get length() {
 		return Math.sqrt(this.dotProduct(this));
 	}
@@ -35,16 +20,38 @@ export default class Vector {
 	}
 
 	constructor() {
-		this.#value = arguments;
+		this._value = [...arguments];
 	}
 
 	copy() {
-		return new Vector(...this.#value);
+		return new this.constructor(...this._value);
+	}
+}
+
+
+export class Vector2D extends BaseVector {
+	get x() {return this._value[0]}
+	get y() {return this._value[1]}
+	set x(_x) {this._value[0] = _x}
+	set y(_y) {this._value[1] = _y}
+
+	static get random() {
+		return new this(Math.random() * 2 - 1, Math.random() * 2 - 1);
+	}
+
+	get angle() {
+		return Math.atan(this.y/this.x);
+	}
+	set angle(_angle) {
+		let oldLength = this.length;
+		this.x = oldLength * Math.cos(_angle % (2 * Math.PI));
+		this.y = oldLength * Math.sin(_angle % (2 * Math.PI));
 	}
 
 	dotProduct(_vec) {
 		return _vec.x * this.x + _vec.y * this.y;
 	}
+		
 
 	add(_vec) {
 		this.x += _vec.x;
@@ -52,7 +59,7 @@ export default class Vector {
 		return this;
 	}
 	difference(_vec) { // Defined as: the result is how you get from this to _vec
-		return new Vector(
+		return new Vector2D(
 			_vec.x - this.x,
 			_vec.y - this.y
 		);
@@ -64,3 +71,39 @@ export default class Vector {
 		return this;
 	}
 }
+export default Vector2D
+
+export class Vector3D extends Vector2D {
+	get z() {return this._value[2]}
+	set z(_z) {this._value[2] = _z}
+
+	static get random() {
+		return new this(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1);
+	}
+	
+	dotProduct(_vec) {
+		return _vec.x * this.x + _vec.y * this.y + _vec.z * this.z;
+	}
+
+	add(_vec) {
+		this.x += _vec.x;
+		this.y += _vec.y;
+		this.z += _vec.z;
+		return this;
+	}
+	difference(_vec) { // Defined as: the result is how you get from this to _vec
+		return new Vector3D(
+			_vec.x - this.x,
+			_vec.y - this.y,
+			_vec.z - this.z
+		);
+	}
+	
+	scale(_scalar) {
+		this.x *= _scalar;
+		this.y *= _scalar;
+		this.z *= _scalar;
+		return this;
+	}
+}
+

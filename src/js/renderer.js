@@ -44,7 +44,5 @@ export default class Renderer {
 	    ctx.lineTo(tip.x, tip.y);
 	    ctx.closePath();
 	    ctx.stroke();
-
 	}
-
 }
