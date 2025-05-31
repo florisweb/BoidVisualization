@@ -45,7 +45,7 @@ export class Vector2D extends BaseVector {
 	}
 
 	get angle() {
-		return Math.atan(this.y/this.x);
+		return Math.atan2(this.y, this.x);
 	}
 	set angle(_angle) {
 		let oldLength = this.length;
@@ -94,8 +94,8 @@ export class Vector3D extends Vector2D {
 
 	get angle() {
 		return new Vector2D(
-			Math.atan(this.y/this.x), 
-			Math.atan(this.z / Math.sqrt(this.x**2 + this.y**2))
+			Math.atan2(this.y, this.x), 
+			Math.atan2(this.z, Math.sqrt(this.x**2 + this.y**2))
 		);
 	}
 

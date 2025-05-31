@@ -5,7 +5,7 @@ let ctx;
 export default class Renderer {
 	canvas;
 	get size() {
-		return new Vector3D(this.canvas.width, this.canvas.height, 200);
+		return new Vector3D(this.canvas.width, this.canvas.height, 100);
 	}
 	constructor({canvas}) {
 		this.canvas = canvas;
@@ -22,7 +22,7 @@ export default class Renderer {
 	drawBoid(_boid) {
 		let percDepth = _boid.position.z / this.size.z;
 		let tiltPerc = _boid.velocity.D2.length / _boid.velocity.length;
-		const size = 20 * percDepth;
+		const size = 10 * percDepth;
 		const length = size * tiltPerc;
 
 		const angle = Math.PI / 2 * 0.5;
@@ -37,7 +37,13 @@ export default class Renderer {
 		let rightWing = wingBase.copy().add(dYWings.copy().scale(-1));
 		let tip = centre.copy().add(leng);
 
-		ctx.strokeStyle = '#777';
+		// ctx.strokeStyle = '#777';
+		const grd = ctx.createLinearGradient(leftWing.x, leftWing.y, rightWing.x, rightWing.y);
+		grd.addColorStop(0, "#eef");
+		grd.addColorStop(.5, "#dcf");
+		grd.addColorStop(1, "#eef");
+
+		ctx.fillStyle = grd;
 		ctx.beginPath();
 	    ctx.moveTo(tip.x, tip.y);
 	    ctx.lineTo(leftWing.x, leftWing.y);
@@ -45,6 +51,7 @@ export default class Renderer {
 	    ctx.lineTo(rightWing.x, rightWing.y);
 	    ctx.lineTo(tip.x, tip.y);
 	    ctx.closePath();
-	    ctx.stroke();
+	    // ctx.stroke();
+	    ctx.fill();
 	}
 }

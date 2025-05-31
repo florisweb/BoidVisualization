@@ -16,14 +16,14 @@ export default class Simulation {
 			pos.x *= Math.random();
 			pos.y *= Math.random();
 			pos.z *= Math.random();
-			this.boids.push(new Boid({position: this.size.copy().scale(.5)}));
+			this.boids.push(new Boid({position: pos}));
+			// this.boids.push(new Boid({position: this.size.copy().scale(.5)}));
 		}
 	}
 
 	#lastUpdate = new Date();
-	update(_dt) {
-		// let dt = _dt; //(new Date() - this.#lastUpdate)/1000;
-		let dt = (new Date() - this.#lastUpdate)/1000;
+	update() {
+		let dt = (new Date() - this.#lastUpdate) / 1000;
 		this.#updateBoidVelocities(dt);
 		this.#enforceBoundaryConditions(dt);
 		this.#lastUpdate = new Date();
@@ -50,12 +50,12 @@ export default class Simulation {
 			avPos.scale(1 / avPos.length);
 
 			let dVelocityAngle = boid.velocity.angle.difference(avVelocity.angle);
-			let dVelocityLength = boid.velocity.length - avVelocity.length;
+			let dVelocityLength = avVelocity.length - boid.velocity.length;
 			
 			let dPosAngle = boid.velocity.angle.difference(boid.position.difference(avPos).angle);
-			deltaVAngleVecs[b] = dVelocityAngle.scale(-.1).add(dPosAngle.scale(-.5));
-			deltaVAngleVecs[b].y = 0;
-			deltaVLengths[b] = -dVelocityLength * .5;
+			deltaVAngleVecs[b] = dVelocityAngle.scale(-.1).add(dPosAngle.scale(-.5)).add(Vector2D.random.scale(5));
+			deltaVAngleVecs[b].y *= .1 ;
+			deltaVLengths[b] = dVelocityLength * .1 + (1 - 2 * Math.random()) * 5;
 		}
 
 		for (let b = 0; b < this.boids.length; b++) 
