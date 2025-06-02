@@ -13,7 +13,7 @@ const App = new class {
 
 		window.App = this;
 		this.renderer = new Renderer({canvas: document.querySelector('#worldCanvas')});
-		this.simulation = new Simulation({size: this.renderer.size, boidCount: 20});
+		this.simulation = new Simulation({size: this.renderer.size, boidCount: 300});
 
 		this.update();
 	}

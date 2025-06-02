@@ -5,7 +5,7 @@ export default class Boid {
 	velocity;
 	constructor({position}) {
 		this.position = position;
-		this.velocity = Vector3D.random.scale(200);
+		this.velocity = Vector3D.random.scale(500);
 		this.velocity.z *= .1;
 	}
 

@@ -4,6 +4,7 @@ import Boid from './boid.js';
 export default class Simulation {
 	config = {
 		viewingRange: 100,
+		maxDt: 0.01
 	}
 	size;
 	boids = [];
@@ -22,8 +23,10 @@ export default class Simulation {
 	}
 
 	#lastUpdate = new Date();
+	updates = 0;
 	update() {
-		let dt = (new Date() - this.#lastUpdate) / 1000;
+		this.updates++;
+		let dt = Math.min((new Date() - this.#lastUpdate) / 1000, this.config.maxDt);
 		this.#updateBoidVelocities(dt);
 		this.#enforceBoundaryConditions(dt);
 		this.#lastUpdate = new Date();
