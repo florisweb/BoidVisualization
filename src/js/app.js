@@ -19,8 +19,8 @@ const App = new class {
 	}
 
 	update(_dt) {
-		this.simulation.update(_dt);
 		this.renderer.drawBoids(this.simulation.boids);
+		this.simulation.update(_dt);
 		requestAnimationFrame(() => this.update());
 	}
 }

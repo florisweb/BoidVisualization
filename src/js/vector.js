@@ -43,6 +43,9 @@ export class Vector2D extends BaseVector {
 	static get random() {
 		return new this(Math.random() * 2 - 1, Math.random() * 2 - 1);
 	}
+	static get empty() {
+		return new this(0, 0);
+	}
 
 	get angle() {
 		return Math.atan2(this.y, this.x);
@@ -87,6 +90,9 @@ export class Vector3D extends Vector2D {
 
 	static get random() {
 		return new this(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1);
+	}
+	static get empty() {
+		return new this(0, 0, 0);
 	}
 	get D2() {
 		return new Vector2D(this.x, this.y);
