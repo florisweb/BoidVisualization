@@ -10,8 +10,8 @@ const App = new class {
 	constructor() {
 		window.Vector3D = Vector3D;
 		window.Vector2D = Vector2D;
-
 		window.App = this;
+
 		this.renderer = new Renderer({canvas: document.querySelector('#worldCanvas')});
 		this.simulation = new Simulation({size: this.renderer.size, boidCount: 300});
 
@@ -23,6 +23,11 @@ const App = new class {
 		this.simulation.update(_dt);
 		requestAnimationFrame(() => this.update());
 	}
+}
+
+document.body.onscroll = () => {
+	let offset = document.scrollingElement.scrollTop / App.renderer.canvas.offsetHeight * App.renderer.size.y;
+	console.log(offset);
 }
 
 export default App;

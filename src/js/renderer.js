@@ -31,6 +31,16 @@ export default class Renderer {
 	drawBoids(_boids) {
 		ctx.clearRect(0, 0, this.size.x, this.size.y);
 		for (let boid of _boids) this.drawBoid(boid);
+
+
+		try {
+			for (let point of App.simulation.avoidPoints)
+			{
+				ctx.strokeStyle = '#f00';
+			    ctx.circle(point.loc.x, point.loc.y, point.range);
+			    ctx.stroke();	
+			}
+	    } catch (e) {}
 	}
 
 	drawBoid(_boid) {
@@ -52,9 +62,9 @@ export default class Renderer {
 		let tip = centre.copy().add(leng);
 
 		const grd = ctx.createLinearGradient(leftWing.x, leftWing.y, rightWing.x, rightWing.y);
-		grd.addColorStop(0, "rgba(238, 238, 255, 1)");
-		grd.addColorStop(.5, "#dcf");
-		grd.addColorStop(1, "rgba(238, 238, 255, 1)");
+		grd.addColorStop(0, `rgba(238, 238, 255, ${percDepth})`);
+		grd.addColorStop(.5, `rgba(221, 204, 255, ${percDepth})`);
+		grd.addColorStop(1, `rgba(238, 238, 255, ${percDepth})`);
 
 		ctx.fillStyle = grd;
 		ctx.beginPath();

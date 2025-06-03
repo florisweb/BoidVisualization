@@ -4,10 +4,25 @@ import App from './app.js';
 
 export default class Simulation {
 	config = {
-		viewingRange: 100,
-		targetFlockSpacingDistance: 30,
-		maxDt: 0.01
+		viewingRange: 90,
+		targetFlockSpacingDistance: 35,
+		maxDt: 0.01,
 	}
+	avoidPoints = [
+		{
+			loc: new Vector2D(350, 400),
+			range: 80
+		},
+		{
+			loc: new Vector2D(400, 400),
+			range: 80
+		},
+		{
+			loc: new Vector2D(450, 400),
+			range: 80
+		}
+	];
+
 	size;
 	boids = [];
 	constructor({size, boidCount}) {
@@ -19,6 +34,9 @@ export default class Simulation {
 			pos.x *= Math.random();
 			pos.y *= Math.random();
 			pos.z *= Math.random();
+			// pos.y *= .45;
+			// pos.x = 295;
+			// pos.z = 800;
 			this.boids.push(new Boid({position: pos}));
 			// this.boids.push(new Boid({position: this.size.copy().scale(.5)}));
 		}
@@ -35,11 +53,52 @@ export default class Simulation {
 	}
 	
 	#applyBoidForces(_dt) {
+		const speed = 10;
+
 		let preAvgVelocity = this.boids.map(r => r.velocity.length).reduce((a, b) => a + b, 0) / this.boids.length;
 		for (let boid of this.boids)
 		{
 			let rangeInfo = this.#getBoidsInRange(boid.position, this.config.viewingRange, boid);
 			let neighbours = rangeInfo.neighbours;
+
+
+
+			// Avoid collision with point/cylinder
+
+			for (let point of this.avoidPoints)
+			{
+
+				let deltaPos = boid.position.D2.difference(point.loc)
+				let pointDist = Math.min(Math.min(deltaPos.length - point.range, 0), 1e10);
+				if (pointDist === 0) continue;
+
+				let dir = boid.velocity.D2.projectOnTo(deltaPos.perpendicular).unitary; 
+				let force = dir.scale(-pointDist * 10 * speed);
+
+
+				let deltaVelocity = force.copy().scale(_dt / boid.mass);
+				let endVelocity = boid.velocity.D2.copy().add(deltaVelocity);
+				let targetEndVelocity = endVelocity.copy();
+				targetEndVelocity.length = boid.velocity.length;
+
+				let delta = endVelocity.difference(targetEndVelocity);
+				let effectiveForce = force.add(delta.copy().scale(boid.mass / _dt));
+
+				let endVelocity2 = boid.velocity.D2.copy().add(effectiveForce.copy().scale(_dt / boid.mass));
+				boid.applyForce(new Vector3D(effectiveForce.x, effectiveForce.y, 0));
+
+				// try {
+				// 	App.renderer.drawVector(boid.position, boid.velocity, '#f00');
+				// 	App.renderer.drawVector(boid.position, deltaVelocity.copy().scale(1), '#0f0');
+				// 	App.renderer.drawVector(boid.position, targetEndVelocity.copy().scale(1), '#00f');
+				// 	App.renderer.drawVector(boid.position.copy().add(endVelocity), delta.copy().scale(.5), '#f0f');
+
+				// 	App.renderer.drawVector(boid.position, endVelocity2.copy().scale(1), '#0ff');
+
+				// } catch (e) {}
+			}
+
+
 			if (neighbours.length === 0) continue;
 
 			let avVelocity = new Vector3D(0, 0, 0);
@@ -55,24 +114,23 @@ export default class Simulation {
 			avVelocity.scale(1 / neighbours.length);
 			avPos.scale(1 / neighbours.length);
 
-			let dVelocity = boid.velocity.unitary.difference(avVelocity.unitary);
-
 
 			// Direction matching
-			boid.applyForce(dVelocity.scale(100));
+			let dVelocity = boid.velocity.unitary.difference(avVelocity.unitary);
+			boid.applyForce(dVelocity.scale(100 * speed));
 			
 			// Velocity matching
-			boid.applyForce(boid.velocity.unitary.scale((avVelocityLength - boid.velocity.length) * 1));
+			boid.applyForce(boid.velocity.unitary.scale((avVelocityLength - boid.velocity.length) * 1 * speed));
 
 			// Steer towards centre of local flock
-			// let scalar = -(deltaPos.length - this.config.targetFlockSpacingDistance) * .01;
-			boid.applyForce(boid.position.difference(avPos).scale(0.1));
+			boid.applyForce(boid.position.difference(avPos).scale(0.1 * speed));
 
 			// Avoid collisions -> per definition an energy loss = type of friction
-			let deltaPos = boid.position.difference(rangeInfo.closest.position);
-			let closestDist = Math.min(deltaPos.length - this.config.targetFlockSpacingDistance, 0);
-			boid.applyForce(deltaPos.scale(closestDist * .1));
+			let deltaClosestPos = boid.position.difference(rangeInfo.closest.position);
+			let closestDist = Math.min(deltaClosestPos.length - this.config.targetFlockSpacingDistance, 0);
+			boid.applyForce(deltaClosestPos.scale(closestDist * .1 * speed));
 
+			
 
 			try {
 				if (!App.renderer.renderDebugInfo) continue;
@@ -83,69 +141,14 @@ export default class Simulation {
 					App.renderer.drawVectorTo(boid.position, n.position, '#eee');
 				}
 			} catch (e) {}
-
-
-			// let dVelocityAngle = boid.velocity.angle.difference(avVelocity.angle);
-			// let dVelocityLength = avVelocity.length - boid.velocity.length;
-			
-			// let dPosAngle = boid.velocity.angle.difference(boid.position.difference(avPos).angle);
-			// deltaVAngleVecs[b] = dVelocityAngle.scale(-.1).add(dPosAngle.scale(-.5)).add(Vector2D.random.scale(5));
-			// deltaVAngleVecs[b].y *= .1 ;
-			// deltaVLengths[b] = dVelocityLength * .1 + (1 - 2 * Math.random()) * 5;
 		}
+
 		let targetVelocity = 200;
-
 		let deltaV = targetVelocity - preAvgVelocity;
-		console.log(preAvgVelocity);
-
 		for (let boid of this.boids) boid.applyForce(boid.velocity.unitary.scale(deltaV));
-
-		// for (let b = 0; b < this.boids.length; b++) 
-		// {
-		// 	this.boids[b].velocity.angle = this.boids[b].velocity.angle.add(
-		// 		deltaVAngleVecs[b] ? deltaVAngleVecs[b].scale(_dt) : new Vector2D(0, 0)
-		// 	);
-		// 	this.boids[b].velocity.length += deltaVLengths[b] * _dt || 0;
-		// }
 	}
 
-	// #updateBoidVelocities(_dt) {
-	// 	let deltaVAngleVecs = [];
-	// 	let deltaVLengths = [];
-	// 	for (let b = 0; b < this.boids.length; b++)
-	// 	{
-	// 		let boid = this.boids[b];
-	// 		let neighbours = this.#getBoidsInRange(boid.position, this.config.viewingRange);
-	// 		let trueNeighbours = neighbours.filter(n => n !== boid);
-	// 		if (trueNeighbours.length === 0) continue;
-
-	// 		let avVelocity = new Vector3D(0, 0, 0);
-	// 		let avPos = new Vector3D(0, 0, 0);
-	// 		for (let neighbour of trueNeighbours) 
-	// 		{
-	// 			avVelocity.add(neighbour.velocity);
-	// 			avPos.add(neighbour.position);
-	// 		}
-	// 		avVelocity.scale(1 / trueNeighbours.length);
-	// 		avPos.scale(1 / avPos.length);
-
-	// 		let dVelocityAngle = boid.velocity.angle.difference(avVelocity.angle);
-	// 		let dVelocityLength = avVelocity.length - boid.velocity.length;
-			
-	// 		let dPosAngle = boid.velocity.angle.difference(boid.position.difference(avPos).angle);
-	// 		deltaVAngleVecs[b] = dVelocityAngle.scale(-.1).add(dPosAngle.scale(-.5)).add(Vector2D.random.scale(5));
-	// 		deltaVAngleVecs[b].y *= .1 ;
-	// 		deltaVLengths[b] = dVelocityLength * .1 + (1 - 2 * Math.random()) * 5;
-	// 	}
-
-	// 	for (let b = 0; b < this.boids.length; b++) 
-	// 	{
-	// 		this.boids[b].velocity.angle = this.boids[b].velocity.angle.add(
-	// 			deltaVAngleVecs[b] ? deltaVAngleVecs[b].scale(_dt) : new Vector2D(0, 0)
-	// 		);
-	// 		this.boids[b].velocity.length += deltaVLengths[b] * _dt || 0;
-	// 	}
-	// }
+	
 	#getBoidsInRange(_pos, _range, _self) {
 		const rangeSquared = _range**2;
 		let boids = new Set();
