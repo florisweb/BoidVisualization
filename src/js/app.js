@@ -3,6 +3,22 @@ import Simulation from './simulation.js';
 import Renderer from './renderer.js';
 
 
+let trackedElement = document.querySelector('#element');
+document.body.onscroll = (_e) => {
+	let offset = element.getBoundingClientRect().top / App.renderer.canvas.offsetHeight * App.renderer.size.y;
+	for (let point of App.simulation.avoidPoints)
+	{
+		point.loc.y = offset;
+	}
+}
+
+
+window.onresize = () => {
+	worldCanvas.width = worldCanvas.offsetWidth;
+	worldCanvas.height = worldCanvas.offsetHeight;
+}
+window.onresize();
+
 const App = new class {
 	simulation;
 	renderer;
@@ -25,9 +41,10 @@ const App = new class {
 	}
 }
 
-document.body.onscroll = () => {
-	let offset = document.scrollingElement.scrollTop / App.renderer.canvas.offsetHeight * App.renderer.size.y;
-	console.log(offset);
-}
+
+
+
+
+
 
 export default App;

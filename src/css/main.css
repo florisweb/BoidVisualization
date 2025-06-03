@@ -4,12 +4,11 @@
 body {
 	margin: 0;
 	padding: 0;
+	margin-bottom: 50vh;
 }
 
 #worldCanvas {
-	position: relative;
-	width: auto;
+	position: fixed;
+	width: 100vw;
 	height: 100vh;
-	border: 1px solid red;
-	margin-bottom: 50vh;
 }

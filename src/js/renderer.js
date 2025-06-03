@@ -32,7 +32,7 @@ export default class Renderer {
 		ctx.clearRect(0, 0, this.size.x, this.size.y);
 		for (let boid of _boids) this.drawBoid(boid);
 
-
+		if (!this.renderDebugInfo) return;
 		try {
 			for (let point of App.simulation.avoidPoints)
 			{
