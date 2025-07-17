@@ -4,14 +4,14 @@ import Renderer from './renderer.js';
 import HeightMap from './heightMap.js';
 
 
-let trackedElement = document.querySelector('#element');
-document.body.onscroll = (_e) => {
-	let offset = element.getBoundingClientRect().top / App.renderer.canvas.offsetHeight * App.renderer.size.y;
-	for (let point of App.simulation.avoidPoints)
-	{
-		point.loc.y = offset;
-	}
-}
+// let trackedElement = document.querySelector('#element');
+// document.body.onscroll = (_e) => {
+// 	let offset = element.getBoundingClientRect().top / App.renderer.canvas.offsetHeight * App.renderer.size.y;
+// 	for (let point of App.simulation.avoidPoints)
+// 	{
+// 		point.loc.y = offset;
+// 	}
+// }
 
 
 const App = new class {
@@ -25,8 +25,8 @@ const App = new class {
 		window.App = this;
 
 		this.renderer = new Renderer({canvas: document.querySelector('#worldCanvas')});
-		this.heightMap = new HeightMap({size: this.renderer.size});
-		this.simulation = new Simulation({size: this.renderer.size, boidCount: 50, heightMap: this.heightMap});
+		this.heightMap = new HeightMap({size: this.renderer.size, renderer: this.renderer});
+		this.simulation = new Simulation({size: this.renderer.size, boidCount: 100, heightMap: this.heightMap});
 		
 		this.setup().then(() => document.body.classList.remove('loading'));
 	}

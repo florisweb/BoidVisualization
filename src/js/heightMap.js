@@ -13,11 +13,11 @@ export default class HeightMap {
 		offsets: [] 
 	}
 
-	constructor({size, boidCount}) {
+	constructor({size, boidCount, renderer}) {
 		this.size = size;
 
-		const compCount = 50;
-		const minWavelength = 400;
+		const compCount = 100;
+		const minWavelength = 400 * renderer.pxQualityRatio;
 
 		let points = [[
 			500, 500
@@ -38,11 +38,16 @@ export default class HeightMap {
 				let topPoint = points[Math.floor(Math.random() * points.length)];
 				this.mapData.offsets.push([
 					topPoint[0] + this.mapData.wavelengths[i][0] * .2 * (1 - 2 * Math.random()), 
-					topPoint[1] + this.mapData.wavelengths[i][1] * .2 * (1 - 2 *Math.random())
+					topPoint[1] + this.mapData.wavelengths[i][1] * .2 * (1 - 2 * Math.random())
 				]);
 			} else {
 				this.mapData.offsets.push([Math.random() * this.size.x, Math.random() * this.size.y]);
 			}
+
+			// this.mapData.offsets.push([
+			// 	this.size.x / 2 + this.mapData.wavelengths[i][0] / 2, 
+			// 	Math.random() * this.size.y
+			// ]);
 			
 			this.mapData.amplitudes.push(amp);
 		}
@@ -50,9 +55,14 @@ export default class HeightMap {
 	}
 	
 	getHeightAtPosition(_x, _y) {
-		return this.preCalcedMap[Math.floor(_x) + 1][Math.floor(_y) + 1];
+		return this.preCalcedMap[Math.min(Math.max(Math.floor(_x), 0), this.size.x) + 1][Math.min(Math.max(Math.floor(_y), 0), this.size.y) + 1];
 	}
-
+	getSlopeAtPosition(_x, _y) {
+		return new Vector2D(
+			(this.getHeightAtPosition(_x + 1, _y) - this.getHeightAtPosition(_x - 1, _y)) / 2,
+			(this.getHeightAtPosition(_x, _y + 1) - this.getHeightAtPosition(_x, _y - 1)) / 2,
+		);
+	}
 
 	preCalcHeightMap(_size) {
 		console.time('preCalcHeightMapGPU');

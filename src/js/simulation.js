@@ -4,24 +4,28 @@ import App from './app.js';
 
 export default class Simulation {
 	config = {
-		viewingRange: 90,
-		targetFlockSpacingDistance: 35,
+		viewingRange: 130,
+		targetFlockSpacingDistance: 50,
 		maxDt: 0.01,
+		mapFollowProbeDistance: 30,
+		mapFollowRelevantHeightPerc: .1,
+		mapFollowCorrectionStrength: 1000,
 	}
-	avoidPoints = [
-		{
-			loc: new Vector2D(350, 400),
-			range: 80
-		},
-		{
-			loc: new Vector2D(400, 400),
-			range: 80
-		},
-		{
-			loc: new Vector2D(450, 400),
-			range: 80
-		}
-	];
+
+	avoidPoints = [];
+	// 	{
+	// 		loc: new Vector2D(350, 400),
+	// 		range: 80
+	// 	},
+	// 	{
+	// 		loc: new Vector2D(400, 400),
+	// 		range: 80
+	// 	},
+	// 	{
+	// 		loc: new Vector2D(450, 400),
+	// 		range: 80
+	// 	}
+	// ];
 
 	size;
 	boids = [];
@@ -36,11 +40,8 @@ export default class Simulation {
 			pos.x *= Math.random();
 			pos.y *= Math.random();
 			pos.z *= Math.random();
-			// pos.y *= .45;
-			// pos.x = 295;
-			// pos.z = 800;
+			
 			this.boids.push(new Boid({position: pos}));
-			// this.boids.push(new Boid({position: this.size.copy().scale(.5)}));
 		}
 	}
 
@@ -99,14 +100,38 @@ export default class Simulation {
 				// } catch (e) {}
 			}
 
-			// Avoid collidions with mountains
-			// let protPoint = boid.position.D2.add(boid.velocity.copy().scale(_dt * 30));
-			// let h = this.#heightMap.getHeightAtPosition(protPoint.x, protPoint.y);
-			// let dh = h - protPoint.z;
 
 
 
+			// Avoid collidions with mountains / Fly towards lower spots
+			{
+				let protPoint = boid.position.copy().add(boid.velocity.copy().scale(_dt * this.config.mapFollowProbeDistance));
+	
+				let h = this.#heightMap.getHeightAtPosition(protPoint.x, protPoint.y) * this.size.z;
+				let dh = boid.position.z - h;
+				if (dh < this.size.z * this.config.mapFollowRelevantHeightPerc) {
+					
+					let slope = this.#heightMap.getSlopeAtPosition(protPoint.x, protPoint.y).scale(this.size.z);
+					let correction = slope.projectOnTo(boid.velocity.perpendicular.unitary).scale(-this.config.mapFollowCorrectionStrength);
 
+
+					let deltaVelocity = correction.copy().scale(_dt / boid.mass);
+					let endVelocity = boid.velocity.D2.copy().add(deltaVelocity);
+					let targetEndVelocity = endVelocity.copy();
+					targetEndVelocity.length = boid.velocity.length;
+
+					let delta = endVelocity.difference(targetEndVelocity);
+					let effectiveForce = correction.add(delta.copy().scale(boid.mass / _dt));
+
+					let endVelocity2 = boid.velocity.D2.copy().add(effectiveForce.copy().scale(_dt / boid.mass));
+					boid.applyForce(new Vector3D(effectiveForce.x, effectiveForce.y, 0));
+
+					try {
+						if (!App.renderer.renderDebugInfo) continue;
+						App.renderer.drawVector(boid.position, correction.scale(.2), '#f00');
+					} catch (e) {}
+				}
+			}
 
 
 			if (neighbours.length === 0) continue;
