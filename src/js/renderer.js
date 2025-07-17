@@ -132,9 +132,13 @@ export default class Renderer {
 	    ctx.stroke();
 	}
 
-	#renderedHeightMap = false;
-	async drawHeightMap(_preCalcedHeights) {
-		if (!this.#renderedHeightMap) await this.#renderHeightMapToBuff(_preCalcedHeights);	
+
+
+	async preDrawHeightmap(_preCalcedHeights) {
+		await this.#renderHeightMapToBuff(_preCalcedHeights);
+	}
+
+	async drawHeightMap() {
 		let buffCtx = this.#bufferCanv.getContext('2d');
 		let imageData = buffCtx.getImageData(0, 0, this.#bufferCanv.width, this.#bufferCanv.height);
 		ctx.putImageData(imageData, 0, 0);
@@ -142,7 +146,6 @@ export default class Renderer {
 
 	#secSize = 400;
 	async #renderHeightMapToBuff(_preCalcedHeights) {
-		this.#renderedHeightMap = true;
 		console.time('render');
 
 		let buffCtx = this.#bufferCanv.getContext('2d');

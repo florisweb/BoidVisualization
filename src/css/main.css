@@ -5,10 +5,16 @@ body {
 	margin: 0;
 	padding: 0;
 	margin-bottom: 50vh;
+	transition: opacity .7s;
+}
+body.loading {
+	opacity: 0;
 }
 
 #worldCanvas {
-	position: fixed;
+	position: absolute;
+	top: 0;
+	left: 0;
 	width: 100vw;
-	height: 100vh;
+	height: 300vh;
 }

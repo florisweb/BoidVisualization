@@ -66,7 +66,6 @@ export default class Simulation {
 
 
 			// Avoid collision with point/cylinder
-
 			for (let point of this.avoidPoints)
 			{
 
@@ -100,6 +99,15 @@ export default class Simulation {
 				// } catch (e) {}
 			}
 
+			// Avoid collidions with mountains
+			// let protPoint = boid.position.D2.add(boid.velocity.copy().scale(_dt * 30));
+			// let h = this.#heightMap.getHeightAtPosition(protPoint.x, protPoint.y);
+			// let dh = h - protPoint.z;
+
+
+
+
+
 
 			if (neighbours.length === 0) continue;
 
@@ -131,7 +139,6 @@ export default class Simulation {
 			let deltaClosestPos = boid.position.difference(rangeInfo.closest.position);
 			let closestDist = Math.min(deltaClosestPos.length - this.config.targetFlockSpacingDistance, 0);
 			boid.applyForce(deltaClosestPos.scale(closestDist * .1 * speed));
-
 			
 
 			try {
