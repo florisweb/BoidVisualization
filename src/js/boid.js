@@ -10,7 +10,6 @@ export default class Boid {
 		this.position = position;
 		this.velocity = Vector3D.random.scale(500);
 		this.velocity.z *= .1;
-		// this.velocity = new Vector3D(30, 0, 0)
 		this.acceleration = Vector3D.empty;
 	}
 

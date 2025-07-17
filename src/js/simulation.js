@@ -147,11 +147,20 @@ export default class Simulation {
 		let deltaV = targetVelocity - preAvgVelocity;
 		for (let boid of this.boids) boid.applyForce(boid.velocity.unitary.scale(deltaV));
 	}
+	
+	// #preCalcBoidsInRangeOfOneAnother(_range) {
+	// 	let boidPosses = this.boids.map(r => r.position);
+	// 	let list = [];
 
+	// 	for (let boid of boidPosses)
+
+
+
+	// }
 	
 	#getBoidsInRange(_pos, _range, _self) {
 		const rangeSquared = _range**2;
-		let boids = new Set();
+		let boids = [];
 
 		let posses = [_pos];
 		let closestBoid;
@@ -166,7 +175,7 @@ export default class Simulation {
 			{
 				let distance = boid.position.difference(_pos).lengthSquared
 				if (distance > rangeSquared) continue;
-				boids.add(boid);
+				boids.push(boid);
 				if (closestDistance < distance) break;
 				closestBoid = boid;
 				closestDistance = distance;
