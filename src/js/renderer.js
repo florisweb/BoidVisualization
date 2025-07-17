@@ -9,6 +9,7 @@ export default class Renderer {
 	get size() {
 		return new Vector3D(this.canvas.width, this.canvas.height, 800);
 	}
+
 	#bufferCanv;
 	constructor({canvas}) {
 		this.canvas = canvas;
@@ -114,70 +115,56 @@ export default class Renderer {
 	}
 
 	#renderedHeightMap = false;
-	async drawHeightMap(_func) {
-		if (!this.#renderedHeightMap) await this.#renderHeightMapToBuff(_func);	
+	async drawHeightMap(_preCalcedHeights) {
+		if (!this.#renderedHeightMap) await this.#renderHeightMapToBuff(_preCalcedHeights);	
 		let buffCtx = this.#bufferCanv.getContext('2d');
 		let imageData = buffCtx.getImageData(0, 0, this.#bufferCanv.width, this.#bufferCanv.height);
 		ctx.putImageData(imageData, 0, 0);
 	}
 
-	#secSize = 100;
-	#pxSize = 1;
-	async #renderHeightMapToBuff(_func) {
+	#secSize = 300;
+	async #renderHeightMapToBuff(_preCalcedHeights) {
 		this.#renderedHeightMap = true;
 		console.time('render');
-		console.time('preCalc');
-		let preCalcedHeights = this.#preCalcHeights(_func);
-		window.p = preCalcedHeights;
-		console.timeEnd('preCalc');
 
 		let buffCtx = this.#bufferCanv.getContext('2d');
 		for (let x = 0; x < this.canvas.width; x += this.#secSize)
 		{
 			for (let y = 0; y < this.canvas.height; y += this.#secSize)
 			{
-				// this.drawMapSection(_func, x, y, buffCtx, preCalcedHeights);
-				this.drawMapSection(preCalcedHeights, x, y, buffCtx);
+				this.drawMapSection(_preCalcedHeights, x, y, buffCtx);
 				await wait(0);
 			}
 		}
 		console.timeEnd('render');
 	}
 
-	#preCalcHeights(_func) {
-		let heights = [];
-		for (let x = -this.#pxSize; x < this.canvas.width + this.#pxSize; x += this.#pxSize)
-		{
-			for (let y = -this.#pxSize; y < this.canvas.height + this.#pxSize; y += this.#pxSize)
-			{
-				let index = x + y * this.canvas.width;
-				heights[index] = _func(x, y);
-			}
-		}
-		return heights;
-	}
-
 	drawMapSection(_preCalced, _minX, _minY, _ctx) {
 		let imgData = _ctx.getImageData(_minX, _minY, this.#secSize, this.#secSize);
-		const lineInterval = .025;
-		for (let x = _minX; x < _minX + this.#secSize; x += this.#pxSize)
+		const lineInterval = .1;
+		for (let x = _minX; x < _minX + this.#secSize; x++)
 		{
-			for (let y = _minY; y < _minY + this.#secSize; y += this.#pxSize)
+			if (x >= this.canvas.width) break;
+			for (let y = _minY; y < _minY + this.#secSize; y++)
 			{
+				if (y >= this.canvas.height) continue;
+
 				let locX = x - _minX;
 				let locY = y - _minY;
+				let offsetX = x + 1;
+				let offsetY = y + 1;
 				let index = (locX + locY * this.#secSize) * 4;
-				let trueIndex = x + y * this.canvas.width;
-				let height = _preCalced[trueIndex];
+				
+				let height = _preCalced[offsetX][offsetY];
 
-				let xSlope = (_preCalced[trueIndex + 1] - _preCalced[trueIndex - 1]) / 2;
-				let ySlope = (_preCalced[trueIndex + this.canvas.width] - _preCalced[trueIndex - this.canvas.width]) / 2;
+				let xSlope = (_preCalced[offsetX + 1][offsetY] - _preCalced[offsetX - 1][offsetY]) / 2;
+				let ySlope = (_preCalced[offsetX][offsetY + 1] - _preCalced[offsetX][offsetY - 1]) / 2;
 				let slope = Math.abs(xSlope) + Math.abs(ySlope);
 
 
 				_ctx.fillStyle = `rgba(138, 138, 200, ${height * .5})`; //`rgba(255, 0, 0, ${height * .2})`;
 				_ctx.beginPath();
-				_ctx.fillRect(x, y, this.#pxSize, this.#pxSize);
+				_ctx.fillRect(x, y, 1, 1);
 				_ctx.closePath();
 				_ctx.fill();
 
@@ -186,13 +173,13 @@ export default class Renderer {
 				// imgData.data[index + 2] = 255;
 				// imgData.data[index + 3] = height * .2 * 255;
 				
-				if (height % lineInterval > (slope) * this.#pxSize * 1) continue;
+				if (height % lineInterval > (slope) * 1) continue;
 				let heightSlot = Math.floor(height / lineInterval) * lineInterval;
 
 
 				_ctx.fillStyle = `rgba(50, 50, 200, ${heightSlot})`; 
 				_ctx.beginPath();
-				_ctx.fillRect(x, y, this.#pxSize, this.#pxSize);
+				_ctx.fillRect(x, y, 1, 1);
 				_ctx.closePath();
 				_ctx.fill();
 

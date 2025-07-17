@@ -7,5 +7,8 @@
     "gulp-concat": "^2.6.1",
     "webpack": "^5.95.0",
     "webpack-stream": "^7.0.0"
+  },
+  "dependencies": {
+    "gpu.js": "^2.16.0"
   }
 }

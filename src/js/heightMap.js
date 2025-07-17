@@ -1,41 +1,106 @@
 import { Vector2D, Vector3D } from './vector.js';
 import Boid from './boid.js';
 import App from './app.js';
+import { GPU } from 'gpu.js';
 
 export default class HeightMap {
 	size;
 	#func;
+	preCalcedMap = [];
+
+	mapData = {
+		wavelengths: [],
+		amplitudes: [],
+		offsets: [] 
+	}
+
 	constructor({size, boidCount}) {
 		this.size = size;
 
-		let wavelengths = [];
-		let amps = [];
-		let offsets = [];
+		const compCount = 50;
+		const minWavelength = 200;
 
-		for (let i = 0; i < 10; i++)
+		for (let i = 0; i < compCount; i++)
 		{
-			wavelengths.push([Math.max(Math.random() * this.size.x, 80), Math.max(Math.random() * this.size.y, 80)]);
-			offsets.push([Math.random() * this.size.x, Math.random() * this.size.y]);
-			amps.push([Math.random(), Math.random()]);
+			let v = i / compCount + 1;
+			
+			this.mapData.wavelengths.push([Math.max(Math.random() * this.size.x * v, minWavelength), Math.max(Math.random() * this.size.y * v, minWavelength)]);
+			this.mapData.offsets.push([Math.random() * this.size.x, Math.random() * this.size.y]);
+			this.mapData.amplitudes.push(Math.random() * v);
 		}
-		let maxAmp = 2 * amps.map(r => r[0] + r[1]).reduce((a, b) => a + b, 0);
+		let maxAmp = this.mapData.amplitudes.reduce((a, b) => a + b, 0);
 
 		this.#func = (_x, _y) => {
 			return wavelengths.map((v, i) => 
-				// amps[i][0] * Math.cos(2 * Math.PI * _x / v[0] + offsets[i][0]) + 
-				// amps[i][1] * Math.sin(2 * Math.PI * _y / v[1] + offsets[i][1])
-				amps[i][0] * Math.cos(2 * Math.PI * _x / v[0] + offsets[i][0]) * Math.cos(2 * Math.PI * _y / v[1] + offsets[i][1])
-			).reduce((a, b) => a + b, 0) / maxAmp;
+				amps[i][0] * Math.cos(2 * Math.PI * _x / v[0] + offsets[i][0]) * Math.cos(2 * Math.PI * _y / v[1] + offsets[i][1]) + maxAmp
+			).reduce((a, b) => a + b, 0) / (2 * maxAmp);
 		}
-
 	}
 	
 	getHeightAtPosition(_x, _y) {
 		// return PerlinNoise.noise(_x / this.size.x, _y / this.size.y, .5);
 		return this.#func(_x, _y);
-		// return (2 + Math.sin(2 * Math.PI / this.size.x * _x) + Math.sin(2 * Math.PI / this.size.y * _y))/4;
+	}
+
+
+	preCalcHeightMap(_size, _pxSize) {
+		console.time('preCalcHeightMap');
+		let heights = [];
+		for (let x = -_pxSize; x < _size.x + _pxSize; x += _pxSize)
+		{
+			heights[x] = [];
+			for (let y = -_pxSize; y < _size.y + _pxSize; y += _pxSize)
+			{
+				heights[x][y] = this.getHeightAtPosition(x, y);
+			}
+		}
+		this.preCalcedMap = heights;
+		console.timeEnd('preCalcHeightMap');
+		return heights;
+	}
+
+	preCalcHeightMapGPU(_size) {
+
+		console.time('preCalcHeightMapGPU');
+
+		
+		const gpu = new GPU();
+		const calcHeightMap = gpu.createKernel(function(_compCount, wavelengths, offsets, amps) {
+			let val = 0;
+			for (let i = 0; i < _compCount; i++)
+			{
+				val += amps[i] *
+						Math.cos(2 * Math.PI * this.thread.x / wavelengths[i][0] + offsets[i][0]) * 
+						Math.cos(2 * Math.PI * this.thread.y / wavelengths[i][1] + offsets[i][1]);
+			}
+			return val;
+		}).setOutput([_size.y + 2, _size.x + 2]);
+
+		this.preCalcedMap = calcHeightMap(
+			this.mapData.wavelengths.length, 
+			this.mapData.wavelengths, 
+			this.mapData.offsets, 
+			this.mapData.amplitudes
+		);
+
+		// Normalize the map
+		let max = Math.max(...this.preCalcedMap.map(r => Math.max(...r)));
+		let min = Math.min(...this.preCalcedMap.map(r => Math.min(...r)));
+		for (let x = 0; x < this.preCalcedMap.length; x++)
+		{
+			for (let y = 0; y < this.preCalcedMap[x].length; y++)
+			{
+				this.preCalcedMap[x][y] = (this.preCalcedMap[x][y] - min) / (max - min);
+			}
+		}
+
+		console.timeEnd('preCalcHeightMapGPU');
+		return this.preCalcedMap;
 	}
 }
+
+
+
 
 //https://asserttrue.blogspot.com/2011/12/perlin-noise-in-javascript_31.html
 const PerlinNoise = new function() {

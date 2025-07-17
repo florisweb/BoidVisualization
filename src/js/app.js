@@ -27,12 +27,14 @@ const App = new class {
 		this.renderer = new Renderer({canvas: document.querySelector('#worldCanvas')});
 		this.simulation = new Simulation({size: this.renderer.size, boidCount: 100});
 		this.heightMap = new HeightMap({size: this.renderer.size});
-
+		// this.heightMap.preCalcHeightMap(this.renderer.size, this.renderer.config.map.pxSize);
+		this.heightMap.preCalcHeightMapGPU(this.renderer.size);
+		
 		this.update();
 	}
 
 	update(_dt) {
-		this.renderer.drawHeightMap((x, y) => this.heightMap.getHeightAtPosition(x, y));
+		this.renderer.drawHeightMap(this.heightMap.preCalcedMap);
 		this.renderer.drawBoids(this.simulation.boids);
 		this.simulation.update(_dt);
 		requestAnimationFrame(() => this.update());
