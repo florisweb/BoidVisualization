@@ -23,7 +23,7 @@ export default class HeightMap {
 		for (let i = 0; i < compCount; i++)
 		{
 			let v = i / compCount + 1;
-			
+
 			this.mapData.wavelengths.push([Math.max(Math.random() * this.size.x * v, minWavelength), Math.max(Math.random() * this.size.y * v, minWavelength)]);
 			this.mapData.offsets.push([Math.random() * this.size.x, Math.random() * this.size.y]);
 			this.mapData.amplitudes.push(Math.random() * v);
@@ -43,27 +43,9 @@ export default class HeightMap {
 	}
 
 
-	preCalcHeightMap(_size, _pxSize) {
-		console.time('preCalcHeightMap');
-		let heights = [];
-		for (let x = -_pxSize; x < _size.x + _pxSize; x += _pxSize)
-		{
-			heights[x] = [];
-			for (let y = -_pxSize; y < _size.y + _pxSize; y += _pxSize)
-			{
-				heights[x][y] = this.getHeightAtPosition(x, y);
-			}
-		}
-		this.preCalcedMap = heights;
-		console.timeEnd('preCalcHeightMap');
-		return heights;
-	}
-
-	preCalcHeightMapGPU(_size) {
-
+	preCalcHeightMap(_size) {
 		console.time('preCalcHeightMapGPU');
 
-		
 		const gpu = new GPU();
 		const calcHeightMap = gpu.createKernel(function(_compCount, wavelengths, offsets, amps) {
 			let val = 0;

@@ -27,8 +27,7 @@ const App = new class {
 		this.renderer = new Renderer({canvas: document.querySelector('#worldCanvas')});
 		this.simulation = new Simulation({size: this.renderer.size, boidCount: 100});
 		this.heightMap = new HeightMap({size: this.renderer.size});
-		// this.heightMap.preCalcHeightMap(this.renderer.size, this.renderer.config.map.pxSize);
-		this.heightMap.preCalcHeightMapGPU(this.renderer.size);
+		this.heightMap.preCalcHeightMap(this.renderer.size);
 		
 		this.update();
 	}

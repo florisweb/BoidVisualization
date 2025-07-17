@@ -122,7 +122,7 @@ export default class Renderer {
 		ctx.putImageData(imageData, 0, 0);
 	}
 
-	#secSize = 300;
+	#secSize = 400;
 	async #renderHeightMapToBuff(_preCalcedHeights) {
 		this.#renderedHeightMap = true;
 		console.time('render');
@@ -148,49 +148,34 @@ export default class Renderer {
 			for (let y = _minY; y < _minY + this.#secSize; y++)
 			{
 				if (y >= this.canvas.height) continue;
-
-				let locX = x - _minX;
-				let locY = y - _minY;
 				let offsetX = x + 1;
 				let offsetY = y + 1;
-				let index = (locX + locY * this.#secSize) * 4;
 				
 				let height = _preCalced[offsetX][offsetY];
-
 				let xSlope = (_preCalced[offsetX + 1][offsetY] - _preCalced[offsetX - 1][offsetY]) / 2;
 				let ySlope = (_preCalced[offsetX][offsetY + 1] - _preCalced[offsetX][offsetY - 1]) / 2;
 				let slope = Math.abs(xSlope) + Math.abs(ySlope);
 
 
-				_ctx.fillStyle = `rgba(138, 138, 200, ${height * .5})`; //`rgba(255, 0, 0, ${height * .2})`;
-				_ctx.beginPath();
-				_ctx.fillRect(x, y, 1, 1);
-				_ctx.closePath();
-				_ctx.fill();
-
-				// imgData.data[index + 0] = 238;
-				// imgData.data[index + 1] = 238;
-				// imgData.data[index + 2] = 255;
-				// imgData.data[index + 3] = height * .2 * 255;
+				let locX = x - _minX;
+				let locY = y - _minY;
+				let index = (locX + locY * this.#secSize) * 4;
+				imgData.data[index + 0] = 138;
+				imgData.data[index + 1] = 138;
+				imgData.data[index + 2] = 200;
+				imgData.data[index + 3] = height * .3 * 255;
 				
 				if (height % lineInterval > (slope) * 1) continue;
 				let heightSlot = Math.floor(height / lineInterval) * lineInterval;
 
-
-				_ctx.fillStyle = `rgba(50, 50, 200, ${heightSlot})`; 
-				_ctx.beginPath();
-				_ctx.fillRect(x, y, 1, 1);
-				_ctx.closePath();
-				_ctx.fill();
-
-				// imgData.data[index + 0] = 221;
-				// imgData.data[index + 1] = 204;
-				// imgData.data[index + 2] = 255;
-				// imgData.data[index + 3] = heightSlot * 255;
+				imgData.data[index + 0] = 50;
+				imgData.data[index + 1] = 50;
+				imgData.data[index + 2] = 200;
+				imgData.data[index + 3] = heightSlot * 255;
 			}
 		}
 
-		// _ctx.putImageData(imgData, _minX, _minY);
+		_ctx.putImageData(imgData, _minX, _minY);
 	}
 }
 
