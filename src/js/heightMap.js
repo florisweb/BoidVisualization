@@ -15,25 +15,42 @@ export default class HeightMap {
 
 	constructor({size, boidCount}) {
 		this.size = size;
-		// this.size.y *
 
 		const compCount = 50;
-		const minWavelength = 300;
+		const minWavelength = 400;
+
+		let points = [[
+			500, 500
+		], [
+			1000, 500
+		]]
 
 		for (let i = 0; i < compCount; i++)
 		{
 			let v = i / compCount + 1;
-
-			this.mapData.wavelengths.push([Math.max(Math.random() * this.size.x * v, minWavelength), Math.max(Math.random() * this.size.y * v, minWavelength)]);
-			this.mapData.offsets.push([Math.random() * this.size.x, Math.random() * this.size.y]);
-			this.mapData.amplitudes.push(Math.random() * v);
+			let amp = Math.random() * v;
+			const wavelengthMax = this.size.x * v;
+			this.mapData.wavelengths.push([Math.max(Math.random() * wavelengthMax, minWavelength), Math.max(Math.random() * wavelengthMax, minWavelength)]);
+			
+			let relAmp = amp / compCount;
+			if (relAmp > .01)
+			{
+				let topPoint = points[Math.floor(Math.random() * points.length)];
+				this.mapData.offsets.push([
+					topPoint[0] + this.mapData.wavelengths[i][0] * .2 * (1 - 2 * Math.random()), 
+					topPoint[1] + this.mapData.wavelengths[i][1] * .2 * (1 - 2 *Math.random())
+				]);
+			} else {
+				this.mapData.offsets.push([Math.random() * this.size.x, Math.random() * this.size.y]);
+			}
+			
+			this.mapData.amplitudes.push(amp);
 		}
 
 	}
 	
 	getHeightAtPosition(_x, _y) {
 		return this.preCalcedMap[Math.floor(_x) + 1][Math.floor(_y) + 1];
-		// return PerlinNoise.noise(_x / this.size.x, _y / this.size.y, .5);
 	}
 
 
@@ -46,8 +63,8 @@ export default class HeightMap {
 			for (let i = 0; i < _compCount; i++)
 			{
 				val += amps[i] *
-						Math.cos(2 * Math.PI * this.thread.x / wavelengths[i][0] + offsets[i][0]) * 
-						Math.cos(2 * Math.PI * this.thread.y / wavelengths[i][1] + offsets[i][1]);
+						Math.cos(2 * Math.PI * (this.thread.x - offsets[i][0]) / wavelengths[i][0]) * 
+						Math.cos(2 * Math.PI * (this.thread.y - offsets[i][1]) / wavelengths[i][1]);
 			}
 			return val;
 		}).setOutput([_size.y + 2, _size.x + 2]);
@@ -62,7 +79,7 @@ export default class HeightMap {
 		// Normalize the map
 		let max = Math.max(...this.preCalcedMap.map(r => Math.max(...r)));
 		let min = Math.min(...this.preCalcedMap.map(r => Math.min(...r)));
-		console.log('mm', min, max);
+
 		for (let x = 0; x < this.preCalcedMap.length; x++)
 		{
 			for (let y = 0; y < this.preCalcedMap[x].length; y++)

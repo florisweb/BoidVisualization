@@ -9,6 +9,8 @@ export default class Renderer {
 	get size() {
 		return new Vector3D(this.canvas.width, this.canvas.height, 800);
 	}
+	#pxQualityRatio = 1.2;
+
 
 	#bufferCanv;
 	constructor({canvas}) {
@@ -34,11 +36,10 @@ export default class Renderer {
 
 
 		window.onresize = () => {
-			const pxRatio = 1;
-			worldCanvas.width = worldCanvas.offsetWidth * pxRatio;
-			worldCanvas.height = worldCanvas.offsetHeight * pxRatio;
-			this.#bufferCanv.width = worldCanvas.offsetWidth * pxRatio;
-			this.#bufferCanv.height = worldCanvas.offsetHeight * pxRatio;
+			worldCanvas.width = worldCanvas.offsetWidth * this.#pxQualityRatio;
+			worldCanvas.height = worldCanvas.offsetHeight * this.#pxQualityRatio;
+			this.#bufferCanv.width = worldCanvas.offsetWidth * this.#pxQualityRatio;
+			this.#bufferCanv.height = worldCanvas.offsetHeight * this.#pxQualityRatio;
 		}
 		window.onresize();
 	}
@@ -59,7 +60,7 @@ export default class Renderer {
 
 	drawBoid(_boid) {
 		try {
-			const baseSize = 15;
+			const baseSize = 15 * this.#pxQualityRatio;
 			let floorHeight = App?.heightMap.getHeightAtPosition(_boid.position.x, _boid.position.y) * this.size.z;
 			let distanceToFloor = _boid.position.z - floorHeight;
 			let normalizedDist = distanceToFloor / (this.size.z - floorHeight);
@@ -181,6 +182,26 @@ export default class Renderer {
 				let locX = x - _minX;
 				let locY = y - _minY;
 				let index = (locX + locY * this.#secSize) * 4;
+
+
+
+			
+				// imgData.data[index + 0] = 150 + 55 * height; //+ 50 * height;
+				// imgData.data[index + 1] = 150 + 50 * Math.abs(height - .5); //- 30 * height;
+				// imgData.data[index + 2] = 205 - 100 * height;// - 50 * height;
+
+				// imgData.data[index + 3] = 255;
+				// if (height < .2)
+				// {
+				// 	imgData.data[index + 0] = 0; //+ 50 * height;
+				// 	imgData.data[index + 1] = 100 + 120 * (height/.2)**2; //- 30 * height;
+				// 	imgData.data[index + 2] = 255;// - 50 * height;
+				// } else {
+				// 	imgData.data[index + 0] = 100 + 150 * Math.min(height / .4, 1)**2; //+ 50 * height;
+				// 	imgData.data[index + 1] = 255 - 50 * Math.min(height / .4, 1); //- 30 * height;
+				// 	imgData.data[index + 2] = 150 + 20 * height;// - 50 * height;
+				// }
+
 				imgData.data[index + 0] = 138;
 				imgData.data[index + 1] = 138;
 				imgData.data[index + 2] = 200;
@@ -189,16 +210,45 @@ export default class Renderer {
 				if (height % lineInterval > (slope) * 1) continue;
 				let heightSlot = Math.floor(height / lineInterval) * lineInterval;
 
-				imgData.data[index + 0] = 50;
-				imgData.data[index + 1] = 50;
-				imgData.data[index + 2] = 200;
+				imgData.data[index + 0] = 80;
+				imgData.data[index + 1] = 80 - 30 * (heightSlot);
+				imgData.data[index + 2] = 220 + 30 * (heightSlot);
 				imgData.data[index + 3] = heightSlot * 255;
+
+				// imgData.data[index + 3] = 255;
+				
+				// imgData.data[index + 0] = 100; //+ 50 * height;
+				// imgData.data[index + 1] = 50 + 120 * (height/.2)**2; //- 30 * height;
+				// imgData.data[index + 2] = 200;// - 50 * height;
+			
+				// imgData.data[index + 3] = (height * .9 + .1) * 255;
+
+				// // if (height < .2) 
+				// // {
+				// // 	imgData.data[index + 0] -= 30;
+				// // 	imgData.data[index + 1] -= 30;
+				// // 	imgData.data[index + 2] = 255;
+				// // 	imgData.data[index + 3] += 50;
+				// // }
+
+				
+				// if (height % lineInterval > (slope) * 1) continue;
+				// let heightSlot = Math.floor(height / lineInterval) * lineInterval;
+
+				// // imgData.data[index + 0] = 50 + 0 * height;
+				// // imgData.data[index + 1] = 120 + 50 * height; 
+				// // imgData.data[index + 2] = 200 - 50 * height;
+				// imgData.data[index + 0] = 255;
+				// imgData.data[index + 1] = 200;
+				// imgData.data[index + 2] = 100;
+				// imgData.data[index + 3] = heightSlot * 255;
 			}
 		}
 
 		_ctx.putImageData(imgData, _minX, _minY);
 	}
 }
+
 
 function wait(_ms) {
 	return new Promise((resolve) => setTimeout(resolve, _ms));

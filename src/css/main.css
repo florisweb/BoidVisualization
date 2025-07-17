@@ -4,7 +4,6 @@
 body {
 	margin: 0;
 	padding: 0;
-	margin-bottom: 50vh;
 	transition: opacity .7s;
 }
 body.loading {
