@@ -25,7 +25,9 @@ export default class Simulation {
 
 	size;
 	boids = [];
-	constructor({size, boidCount}) {
+	#heightMap;
+	constructor({size, boidCount, heightMap}) {
+		this.#heightMap = heightMap;
 		this.size = size;
 
 		for (let i = 0; i < boidCount; i++)
@@ -195,9 +197,11 @@ export default class Simulation {
 			if (boid.position.x < 0) boid.position.x += this.size.x;
 			if (boid.position.y < 0) boid.position.y += this.size.y;
 
-			// boid.position.z = boid.position.z % this.size.z;
-			// if (boid.position.z < 0) boid.position.z += this.size.z;
-			if (boid.position.z < 0) boid.velocity.z = Math.abs(boid.velocity.z);
+			let height = this.#heightMap.getHeightAtPosition(boid.position.x, boid.position.y) * this.size.z;
+			if (boid.position.z < height) {
+				boid.velocity.z = Math.abs(boid.velocity.z);
+				boid.position.z = height;
+			}
 			if (boid.position.z > this.size.z) boid.velocity.z = -Math.abs(boid.velocity.z);
 		}
 	}

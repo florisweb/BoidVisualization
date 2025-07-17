@@ -34,16 +34,16 @@ export default class Renderer {
 
 
 		window.onresize = () => {
-			worldCanvas.width = worldCanvas.offsetWidth;
-			worldCanvas.height = worldCanvas.offsetHeight;
-			this.#bufferCanv.width = worldCanvas.offsetWidth;
-			this.#bufferCanv.height = worldCanvas.offsetHeight;
+			const pxRatio = 1;
+			worldCanvas.width = worldCanvas.offsetWidth * pxRatio;
+			worldCanvas.height = worldCanvas.offsetHeight * pxRatio;
+			this.#bufferCanv.width = worldCanvas.offsetWidth * pxRatio;
+			this.#bufferCanv.height = worldCanvas.offsetHeight * pxRatio;
 		}
 		window.onresize();
 	}
 
 	drawBoids(_boids) {
-		// ctx.clearRect(0, 0, this.size.x, this.size.y);
 		for (let boid of _boids) this.drawBoid(boid);
 		if (!this.renderDebugInfo) return;
 		try {
@@ -56,38 +56,20 @@ export default class Renderer {
 	    } catch (e) {}
 	}
 
+
 	drawBoid(_boid) {
-		let percDepth = (_boid.position.z / this.size.z / 2 + .5);
-		let tiltPerc = _boid.velocity.D2.length / _boid.velocity.length;
-		const size = 13 * percDepth;
-		const length = size * tiltPerc;
+		try {
+			const baseSize = 15;
+			let floorHeight = App?.heightMap.getHeightAtPosition(_boid.position.x, _boid.position.y) * this.size.z;
+			let distanceToFloor = _boid.position.z - floorHeight;
+			let normalizedDist = distanceToFloor / (this.size.z - floorHeight);
+			let scaleEffect = normalizedDist**1.2;
+			
+			let opacity = Math.max((.7 - scaleEffect) * .3, 0.01);
+			this.#drawBoidShape(_boid, baseSize / 2 + scaleEffect * baseSize * 2, new Vector2D(20, 20).scale(.1 + scaleEffect), `rgba(0, 0, 0, ${opacity})`);
+			this.#drawBoidShape(_boid, baseSize, new Vector2D(0, 0));
+		} catch (e) {}
 
-		const angle = Math.PI / 2 * 0.5;
-		const widthFactor = .8;
-		let centre = _boid.position.copy();
-		let dir = _boid.velocity.D2.unitary;
-		let leng = dir.copy().scale(length);
-
-		let dYWings = dir.perpendicular.scale(Math.tan(angle) * size);
-		let wingBase = centre.copy().add(leng.copy().scale(-1));
-		let leftWing = wingBase.copy().add(dYWings);
-		let rightWing = wingBase.copy().add(dYWings.copy().scale(-1));
-		let tip = centre.copy().add(leng);
-
-		const grd = ctx.createLinearGradient(leftWing.x, leftWing.y, rightWing.x, rightWing.y);
-		grd.addColorStop(0, `rgba(238, 238, 255, ${percDepth})`);
-		grd.addColorStop(.5, `rgba(221, 204, 255, ${percDepth})`);
-		grd.addColorStop(1, `rgba(238, 238, 255, ${percDepth})`);
-
-		ctx.fillStyle = grd;
-		ctx.beginPath();
-	    ctx.moveTo(tip.x, tip.y);
-	    ctx.lineTo(leftWing.x, leftWing.y);
-	    ctx.lineTo(centre.x, centre.y);
-	    ctx.lineTo(rightWing.x, rightWing.y);
-	    ctx.lineTo(tip.x, tip.y);
-	    ctx.closePath();
-	    ctx.fill();
 
 	    if (!this.renderDebugInfo) return;
 	    try {
@@ -100,6 +82,42 @@ export default class Renderer {
 		    ctx.stroke();
 	    } catch (e) {}
 	}
+
+	#drawBoidShape(_boid, _rawSize, _offset, _color) {
+		let percDepth = (_boid.position.z / this.size.z * .9 + .1)**2;
+		let tiltPerc = _boid.velocity.D2.length / _boid.velocity.length;
+		const size = _rawSize * percDepth;
+		const length = size * tiltPerc;
+
+		const angle = Math.PI / 2 * 0.5;
+		const widthFactor = .8;
+		let centre = _boid.position.copy().add(_offset);
+		let dir = _boid.velocity.D2.unitary;
+		let leng = dir.copy().scale(length);
+
+		let dYWings = dir.perpendicular.scale(Math.tan(angle) * size);
+		let wingBase = centre.copy().add(leng.copy().scale(-1));
+		let leftWing = wingBase.copy().add(dYWings);
+		let rightWing = wingBase.copy().add(dYWings.copy().scale(-1));
+		let tip = centre.copy().add(leng);
+
+		const grd = ctx.createLinearGradient(leftWing.x, leftWing.y, rightWing.x, rightWing.y);
+		percDepth = 1;
+		grd.addColorStop(0, `rgba(238, 238, 255, ${percDepth})`);
+		grd.addColorStop(.5, `rgba(221, 204, 255, ${percDepth})`);
+		grd.addColorStop(1, `rgba(238, 238, 255, ${percDepth})`);
+
+		ctx.fillStyle = _color ? _color : grd;
+		ctx.beginPath();
+	    ctx.moveTo(tip.x, tip.y);
+	    ctx.lineTo(leftWing.x, leftWing.y);
+	    ctx.lineTo(centre.x, centre.y);
+	    ctx.lineTo(rightWing.x, rightWing.y);
+	    ctx.lineTo(tip.x, tip.y);
+	    ctx.closePath();
+	    ctx.fill();
+	}
+
 
 	drawVector(_start, _delta, _color = '#f00') {
 		let end = _start.copy().add(_delta);

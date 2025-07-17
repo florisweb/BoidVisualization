@@ -5,7 +5,6 @@ import { GPU } from 'gpu.js';
 
 export default class HeightMap {
 	size;
-	#func;
 	preCalcedMap = [];
 
 	mapData = {
@@ -18,7 +17,7 @@ export default class HeightMap {
 		this.size = size;
 
 		const compCount = 50;
-		const minWavelength = 200;
+		const minWavelength = 300;
 
 		for (let i = 0; i < compCount; i++)
 		{
@@ -28,18 +27,12 @@ export default class HeightMap {
 			this.mapData.offsets.push([Math.random() * this.size.x, Math.random() * this.size.y]);
 			this.mapData.amplitudes.push(Math.random() * v);
 		}
-		let maxAmp = this.mapData.amplitudes.reduce((a, b) => a + b, 0);
 
-		this.#func = (_x, _y) => {
-			return wavelengths.map((v, i) => 
-				amps[i][0] * Math.cos(2 * Math.PI * _x / v[0] + offsets[i][0]) * Math.cos(2 * Math.PI * _y / v[1] + offsets[i][1]) + maxAmp
-			).reduce((a, b) => a + b, 0) / (2 * maxAmp);
-		}
 	}
 	
 	getHeightAtPosition(_x, _y) {
+		return this.preCalcedMap[Math.floor(_x) + 1][Math.floor(_y) + 1];
 		// return PerlinNoise.noise(_x / this.size.x, _y / this.size.y, .5);
-		return this.#func(_x, _y);
 	}
 
 
@@ -68,6 +61,7 @@ export default class HeightMap {
 		// Normalize the map
 		let max = Math.max(...this.preCalcedMap.map(r => Math.max(...r)));
 		let min = Math.min(...this.preCalcedMap.map(r => Math.min(...r)));
+		console.log('mm', min, max);
 		for (let x = 0; x < this.preCalcedMap.length; x++)
 		{
 			for (let y = 0; y < this.preCalcedMap[x].length; y++)
