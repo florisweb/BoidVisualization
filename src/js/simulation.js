@@ -56,7 +56,7 @@ export default class Simulation {
 	}
 	
 	#applyBoidForces(_dt) {
-		const speed = 10;
+		const speed = 5; // Measure for how quickly they form flocks
 
 		let preAvgVelocity = this.boids.map(r => r.velocity.length).reduce((a, b) => a + b, 0) / this.boids.length;
 		for (let boid of this.boids)
@@ -177,9 +177,23 @@ export default class Simulation {
 			} catch (e) {}
 		}
 
-		let targetVelocity = 200;
-		let deltaV = targetVelocity - preAvgVelocity;
-		for (let boid of this.boids) boid.applyForce(boid.velocity.unitary.scale(deltaV));
+		// Ensure a minimum velocity
+		const minVelocitySquared = 150**2;
+		const maxVelocitySquared = 600**2;
+		for (let boid of this.boids) 
+		{
+			let vel = boid.velocity.lengthSquared;
+			if (vel < minVelocitySquared) {
+				boid.applyForce(boid.velocity.copy().unitary.scale(vel * boid.mass * _dt));
+			} else if (vel > maxVelocitySquared) {
+				boid.applyForce(boid.velocity.copy().unitary.scale(-vel * boid.mass * _dt));
+			}
+		}
+
+
+		// let targetVelocity = 250;
+		// let deltaV = targetVelocity - preAvgVelocity;
+		// for (let boid of this.boids) boid.applyForce(boid.velocity.unitary.scale(deltaV));
 	}
 	
 	// #preCalcBoidsInRangeOfOneAnother(_range) {

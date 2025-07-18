@@ -1,5 +1,6 @@
 import { Vector3D, Vector2D } from './vector.js';
 import App from './app.js';
+import { GPU } from 'gpu.js';
 
 let ctx;
 
@@ -136,7 +137,8 @@ export default class Renderer {
 
 
 	async preDrawHeightmap(_preCalcedHeights) {
-		await this.#renderHeightMapToBuff(_preCalcedHeights);
+		await wait(0);
+		this.renderHeightMapToBuff(_preCalcedHeights);
 	}
 
 	async drawHeightMap() {
@@ -145,70 +147,63 @@ export default class Renderer {
 		ctx.putImageData(imageData, 0, 0);
 	}
 
-	#secSize = 400;
-	async #renderHeightMapToBuff(_preCalcedHeights) {
-		console.time('render');
 
-		let buffCtx = this.#bufferCanv.getContext('2d');
-		for (let x = 0; x < this.canvas.width; x += this.#secSize)
-		{
-			for (let y = 0; y < this.canvas.height; y += this.#secSize)
-			{
-				this.drawMapSection(_preCalcedHeights, x, y, buffCtx);
-				await wait(0);
-			}
-		}
-		console.timeEnd('render');
-	}
-
-	drawMapSection(_preCalced, _minX, _minY, _ctx) {
-		let imgData = _ctx.getImageData(_minX, _minY, this.#secSize, this.#secSize);
+	renderHeightMapToBuff(_preCalcedHeights) {
 		const lineInterval = .1;
-		for (let x = _minX; x < _minX + this.#secSize; x++)
+		const gpu = new GPU();
+		const calcPixels = gpu.createKernel(function(_heights, _lineInterval) {
+			let colorArr = [0, 0, 0, 0];
+			let offsetX = this.thread.y + 1; // Data stored [y][x]: invert coords
+			let offsetY = this.thread.x + 1;
+
+			let height = _heights[offsetX][offsetY];
+			let xSlope = (_heights[offsetX + 1][offsetY] - _heights[offsetX - 1][offsetY]) / 2;
+			let ySlope = (_heights[offsetX][offsetY + 1] - _heights[offsetX][offsetY - 1]) / 2;
+			let slope = Math.abs(xSlope) + Math.abs(ySlope);
+
+			let shadowRate = .9 + .1 * (1 + (xSlope + ySlope) * 2000);
+			colorArr[0] = 38 + 100 * shadowRate;
+			colorArr[1] = 38 + 100 * shadowRate;
+			colorArr[2] = 100 + 100 * shadowRate;
+			colorArr[3] = (height * .2) * 255;
+
+			if (height % _lineInterval > (slope) * 10 && (xSlope < 0 && ySlope < 0)) {
+				let dist = (height % _lineInterval) * 9;
+				colorArr[0] -= 80 * dist;
+				colorArr[1] -= 80 * dist;
+				colorArr[2] -= 50 * dist;
+			}
+
+			
+			if (height % _lineInterval > (slope) * 1) return colorArr;
+			let heightSlot = Math.floor(height / _lineInterval) * _lineInterval;
+			colorArr[0] = 80;
+			colorArr[1] = 80 - 30 * (heightSlot);
+			colorArr[2] = 220 + 30 * (heightSlot);
+			colorArr[3] = heightSlot * 255;
+
+			return colorArr;
+		}).setOutput([this.canvas.height, this.canvas.width]);
+
+
+		let output = calcPixels(_preCalcedHeights, lineInterval);
+		let buffCtx = this.#bufferCanv.getContext('2d');
+		let imgData = buffCtx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+
+		for (let x = 0; x < output.length; x++)
 		{
-			if (x >= this.canvas.width) break;
-			for (let y = _minY; y < _minY + this.#secSize; y++)
+			for (let y = 0; y < output[x].length; y++)
 			{
-				if (y >= this.canvas.height) continue;
-				let offsetX = x + 1;
-				let offsetY = y + 1;
-				
-				let height = _preCalced[offsetX][offsetY];
-				let xSlope = (_preCalced[offsetX + 1][offsetY] - _preCalced[offsetX - 1][offsetY]) / 2;
-				let ySlope = (_preCalced[offsetX][offsetY + 1] - _preCalced[offsetX][offsetY - 1]) / 2;
-				let slope = Math.abs(xSlope) + Math.abs(ySlope);
-
-
-				let locX = x - _minX;
-				let locY = y - _minY;
-				let index = (locX + locY * this.#secSize) * 4;
-
-
-
-				let shadowRate = .9 + .1 * (1 + (xSlope + ySlope) * 2000);
-				imgData.data[index + 0] = 38 + 100 * shadowRate;
-				imgData.data[index + 1] = 38 + 100 * shadowRate;
-				imgData.data[index + 2] = 100 + 100 * shadowRate;
-				imgData.data[index + 3] = (height * .2) * 255;
-
-				if (height % lineInterval > (slope) * 10 && (xSlope < 0 && ySlope < 0)) {
-					let dist = (height % lineInterval) * 9;
-					imgData.data[index + 0] -= 80 * dist;
-					imgData.data[index + 1] -= 80 * dist;
-					imgData.data[index + 2] -= 50 * dist;
-				}
-
-				
-				if (height % lineInterval > (slope) * 1) continue;
-				let heightSlot = Math.floor(height / lineInterval) * lineInterval;
-				imgData.data[index + 0] = 80;
-				imgData.data[index + 1] = 80 - 30 * (heightSlot);
-				imgData.data[index + 2] = 220 + 30 * (heightSlot);
-				imgData.data[index + 3] = heightSlot * 255;
+				let index = (x + y * this.canvas.width) * 4;
+				imgData.data[index + 0] = output[x][y][0];
+				imgData.data[index + 1] = output[x][y][1];
+				imgData.data[index + 2] = output[x][y][2];
+				imgData.data[index + 3] = output[x][y][3];
 			}
 		}
 
-		_ctx.putImageData(imgData, _minX, _minY);
+		buffCtx.putImageData(imgData, 0, 0);
+		return output;
 	}
 }
 

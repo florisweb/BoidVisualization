@@ -17,7 +17,7 @@ export default class HeightMap {
 		this.size = size;
 
 		const compCount = 100;
-		const minWavelength = 400 * renderer.pxQualityRatio;
+		const minWavelength = this.size.x * .3 * renderer.pxQualityRatio;
 
 		let points = [[
 			500, 500
