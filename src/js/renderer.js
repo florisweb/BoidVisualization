@@ -162,21 +162,31 @@ export default class Renderer {
 			let slope = Math.abs(xSlope) + Math.abs(ySlope);
 
 			let shadowRate = .9 + .1 * (1 + (xSlope + ySlope) * 2000);
-			colorArr[0] = 38 + 100 * shadowRate;
-			colorArr[1] = 38 + 100 * shadowRate;
-			colorArr[2] = 100 + 100 * shadowRate;
-			colorArr[3] = (height * .2) * 255;
 
+			let heightSlot = Math.floor(height / _lineInterval) * _lineInterval;
+			let percInSlot = (height - heightSlot) / _lineInterval;
+			// colorArr[0] = 38 + 100 * shadowRate;
+			// colorArr[1] = 38 + 100 * shadowRate;
+			// colorArr[2] = 100 + 100 * shadowRate;
+			// colorArr[3] = (height * .2) * 255;
+			colorArr[0] = 80;
+			colorArr[1] = 80 - 30 * (heightSlot);
+			colorArr[2] = 220 + 30 * (heightSlot);
+			// colorArr[3] = heightSlot * (height * .5 + .5) * 255;
+			colorArr[3] = heightSlot * (percInSlot**3 * .3 + .7) * 255;
+			
+
+			// Add Shadows
 			if (height % _lineInterval > (slope) * 10 && (xSlope < 0 && ySlope < 0)) {
 				let dist = (height % _lineInterval) * 9;
-				colorArr[0] -= 80 * dist;
-				colorArr[1] -= 80 * dist;
-				colorArr[2] -= 50 * dist;
+				colorArr[0] -= 10 * dist;
+				colorArr[1] -= 30 * dist;
+				colorArr[2] -= 40 * dist;
 			}
 
-			
+		
+			// Add height-lines			
 			if (height % _lineInterval > (slope) * 1) return colorArr;
-			let heightSlot = Math.floor(height / _lineInterval) * _lineInterval;
 			colorArr[0] = 80;
 			colorArr[1] = 80 - 30 * (heightSlot);
 			colorArr[2] = 220 + 30 * (heightSlot);
